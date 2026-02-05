@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Icon Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .subtitle {
+            margin-bottom: 30px;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .bingo-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 30px auto;
+            max-width: 400px;
+        }
+
+        .bingo-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .bingo-cell:hover {
+            transform: scale(1.05);
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .bingo-cell:active {
+            transform: scale(0.95);
+        }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            color: #764ba2;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .share-btn {
+            background: linear-gradient(135deg, #00b09b, #96c93d);
+            color: white;
+        }
+
+        .share-btn:hover {
+            background: linear-gradient(135deg, #009384, #85b836);
+        }
+
+        .share-section {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .share-section.active {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        .share-output {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+            color: #333;
+            font-family: monospace;
+            word-break: break-all;
+            text-align: left;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+        }
+
+        .state-indicator {
+            margin-top: 20px;
+            font-size: 0.9em;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .state-indicator::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #4CAF50;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .bingo-cell {
+                font-size: 1.5em;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .instructions p {
+            margin-bottom: 5px;
+            font-size: 0.95em;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Bingo Icon Generator</h1>
+        <p class="subtitle">Click squares to cycle through colors • Auto-saves your progress</p>
+        
+        <div class="instructions">
+            <h3>📋 How to Use</h3>
+            <p>• Click any square to cycle: White → Green → Blue → White</p>
+            <p>• Your progress is automatically saved</p>
+            <p>• Share your bingo board with the Share button</p>
+        </div>
+        
+        <div class="bingo-grid" id="bingoGrid"></div>
+        
+        <div class="controls">
+            <button onclick="resetBoard()">🔄 Reset Board</button>
+            <button onclick="shareBoard()" class="share-btn">📤 Share Board</button>
+        </div>
+        
+        <div class="share-section" id="shareSection">
+            <h3>Share this text:</h3>
+            <div class="share-output" id="shareOutput"></div>
+        </div>
+        
+        <div class="state-indicator" id="stateIndicator">Auto-saved</div>
+    </div>
+
+    <script>
+        // State definitions
+        const STATES = {
+            0: '⬜', // White square
+            1: '🟩', // Green square
+            2: '🟦'  // Blue square
+        };
+
+        const STATE_COUNT = Object.keys(STATES).length;
+        const BOARD_SIZE = 5;
+        const STORAGE_KEY = 'bingoBoardState';
+
+        // Initialize board state
+        let boardState = [];
+
+        // Initialize the board
+        function initBoard() {
+            const grid = document.getElementById('bingoGrid');
+            grid.innerHTML = '';
+            
+            // Load saved state or create new
+            const savedState = localStorage.getItem(STORAGE_KEY);
+            if (savedState) {
+                boardState = JSON.parse(savedState);
+            } else {
+                boardState = Array(BOARD_SIZE * BOARD_SIZE).fill(0);
+            }
+            
+            // Create grid cells
+            for (let i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'bingo-cell';
+                cell.textContent = STATES[boardState[i]];
+                cell.dataset.index = i;
+                
+                cell.addEventListener('click', () => {
+                    toggleCell(i);
+                });
+                
+                grid.appendChild(cell);
+            }
+        }
+
+        // Toggle cell state
+        function toggleCell(index) {
+            boardState[index] = (boardState[index] + 1) % STATE_COUNT;
+            
+            // Update display
+            const cell = document.querySelector(`.bingo-cell[data-index="${index}"]`);
+            cell.textContent = STATES[boardState[index]];
+            
+            // Save to localStorage
+            saveState();
+            
+            // Add animation feedback
+            cell.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                cell.style.transform = '';
+            }, 150);
+        }
+
+        // Save state to localStorage
+        function saveState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(boardState));
+            showStateIndicator('Saved!');
+        }
+
+        // Show state indicator with message
+        function showStateIndicator(message) {
+            const indicator = document.getElementById('stateIndicator');
+            indicator.textContent = message;
+            indicator.style.opacity = '1';
+            
+            setTimeout(() => {
+                indicator.textContent = 'Auto-saved';
+                indicator.style.opacity = '0.8';
+            }, 1000);
+        }
+
+        // Reset board
+        function resetBoard() {
+            if (confirm('Are you sure you want to reset the board? All progress will be lost.')) {
+                boardState = Array(BOARD_SIZE * BOARD_SIZE).fill(0);
+                localStorage.removeItem(STORAGE_KEY);
+                initBoard();
+                showStateIndicator('Board reset!');
+            }
+        }
+
+        // Share board as emoji grid
+        function shareBoard() {
+            const output = [];
+            
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                const rowStart = row * BOARD_SIZE;
+                const rowEnd = rowStart + BOARD_SIZE;
+                const rowEmojis = boardState.slice(rowStart, rowEnd).map(state => STATES[state]);
+                output.push(rowEmojis.join(''));
+            }
+            
+            const shareText = output.join('\n');
+            const shareSection = document.getElementById('shareSection');
+            const shareOutput = document.getElementById('shareOutput');
+            
+            shareOutput.textContent = shareText;
+            shareSection.classList.add('active');
+            
+            // Copy to clipboard
+            navigator.clipboard.writeText(shareText).then(() => {
+                showStateIndicator('Copied to clipboard!');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = shareText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showStateIndicator('Copied to clipboard!');
+            });
+        }
+
+        // Export board data (for debugging)
+        function exportBoard() {
+            console.log('Board state:', boardState);
+            console.log('Export string:', JSON.stringify(boardState));
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', initBoard);
+        
+        // Also save before page unload for safety
+        window.addEventListener('beforeunload', saveState);
+        
+        // Export for debugging (remove in production)
+        window.exportBoard = exportBoard;
+    </script>
+</body>
+</html> 
