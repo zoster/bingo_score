@@ -97,6 +97,10 @@
             transition: all 0.3s ease;
             background: white;
             color: #764ba2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         button:hover {
@@ -108,35 +112,18 @@
             transform: translateY(0);
         }
 
-        .share-btn {
+        .copy-btn {
             background: linear-gradient(135deg, #00b09b, #96c93d);
             color: white;
         }
 
-        .share-btn:hover {
+        .copy-btn:hover {
             background: linear-gradient(135deg, #009384, #85b836);
         }
 
-        .share-section {
-            margin-top: 20px;
-            display: none;
-        }
-
-        .share-section.active {
-            display: block;
-            animation: slideDown 0.3s ease;
-        }
-
-        .share-output {
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 10px;
-            color: #333;
-            font-family: monospace;
-            word-break: break-all;
-            text-align: left;
-            border: 2px dashed rgba(255, 255, 255, 0.3);
+        .copy-btn.copied {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            transform: scale(0.98);
         }
 
         .state-indicator {
@@ -147,6 +134,7 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
+            height: 24px;
         }
 
         .state-indicator::before {
@@ -227,19 +215,18 @@
             <h3>📋 How to Use</h3>
             <p>• Click any square to cycle: White → Green → Blue → White</p>
             <p>• Your progress is automatically saved</p>
-            <p>• Share your bingo board with the Share button</p>
+            <p>• Copy your bingo board emojis to clipboard</p>
         </div>
         
         <div class="bingo-grid" id="bingoGrid"></div>
         
         <div class="controls">
-            <button onclick="resetBoard()">🔄 Reset Board</button>
-            <button onclick="shareBoard()" class="share-btn">📤 Share Board</button>
-        </div>
-        
-        <div class="share-section" id="shareSection">
-            <h3>Share this text:</h3>
-            <div class="share-output" id="shareOutput"></div>
+            <button onclick="resetBoard()">
+                <span>🔄</span> Reset Board
+            </button>
+            <button onclick="copyToClipboard()" class="copy-btn" id="copyBtn">
+                <span>📋</span> Copy Board
+            </button>
         </div>
         
         <div class="state-indicator" id="stateIndicator">Auto-saved</div>
@@ -309,7 +296,7 @@
         // Save state to localStorage
         function saveState() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(boardState));
-            showStateIndicator('Saved!');
+            showStateIndicator('Auto-saved');
         }
 
         // Show state indicator with message
@@ -321,7 +308,7 @@
             setTimeout(() => {
                 indicator.textContent = 'Auto-saved';
                 indicator.style.opacity = '0.8';
-            }, 1000);
+            }, 2000);
         }
 
         // Reset board
@@ -334,8 +321,8 @@
             }
         }
 
-        // Share board as emoji grid
-        function shareBoard() {
+        // Generate emoji grid text
+        function generateEmojiText() {
             const output = [];
             
             for (let row = 0; row < BOARD_SIZE; row++) {
@@ -345,25 +332,58 @@
                 output.push(rowEmojis.join(''));
             }
             
-            const shareText = output.join('\n');
-            const shareSection = document.getElementById('shareSection');
-            const shareOutput = document.getElementById('shareOutput');
+            return output.join('\n');
+        }
+
+        // Copy board to clipboard
+        function copyToClipboard() {
+            const emojiText = generateEmojiText();
+            const copyBtn = document.getElementById('copyBtn');
+            const originalText = copyBtn.innerHTML;
             
-            shareOutput.textContent = shareText;
-            shareSection.classList.add('active');
-            
-            // Copy to clipboard
-            navigator.clipboard.writeText(shareText).then(() => {
+            navigator.clipboard.writeText(emojiText).then(() => {
+                // Visual feedback for successful copy
+                copyBtn.innerHTML = '<span>✅</span> Copied!';
+                copyBtn.classList.add('copied');
+                
                 showStateIndicator('Copied to clipboard!');
-            }).catch(() => {
+                
+                // Reset button after 2 seconds
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+                
+            }).catch(err => {
                 // Fallback for older browsers
+                console.error('Clipboard API failed:', err);
+                
                 const textArea = document.createElement('textarea');
-                textArea.value = shareText;
+                textArea.value = emojiText;
+                textArea.style.position = 'fixed';
+                textArea.style.opacity = '0';
                 document.body.appendChild(textArea);
                 textArea.select();
-                document.execCommand('copy');
+                
+                try {
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        copyBtn.innerHTML = '<span>✅</span> Copied!';
+                        copyBtn.classList.add('copied');
+                        showStateIndicator('Copied to clipboard!');
+                        
+                        setTimeout(() => {
+                            copyBtn.innerHTML = originalText;
+                            copyBtn.classList.remove('copied');
+                        }, 2000);
+                    } else {
+                        showStateIndicator('Failed to copy. Try again.');
+                    }
+                } catch (err) {
+                    showStateIndicator('Copy failed. Select and copy manually.');
+                }
+                
                 document.body.removeChild(textArea);
-                showStateIndicator('Copied to clipboard!');
             });
         }
 
@@ -383,4 +403,4 @@
         window.exportBoard = exportBoard;
     </script>
 </body>
-</html> 
+</html>
